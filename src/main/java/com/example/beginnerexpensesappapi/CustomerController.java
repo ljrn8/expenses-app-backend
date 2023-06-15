@@ -1,8 +1,11 @@
 package com.example.beginnerexpensesappapi;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -14,15 +17,23 @@ import org.springframework.web.bind.annotation.RestController;
 public class CustomerController {
 
     @Autowired
-  	private CustomerRepository repository;
+    private final CustomerRepository repository;
 
-    CustomerController(CustomerRepository repository) {
+    private final CustomerModelAssembler assembler;
+
+    CustomerController(CustomerRepository repository, CustomerModelAssembler assembler) {
         this.repository = repository;
+        this.assembler = assembler;
     }
 
+    // http://localhost:8080/customers
     @GetMapping("/customers")
-    List<Customer> all() {
-        return repository.findAll();
+    CollectionModel<EntityModel<Customer>> all() {
+        List<EntityModel<Customer>> customers = repository.findAll().stream() //
+                .map(assembler::toModel) //
+                .collect(Collectors.toList());
+
+        return CollectionModel.of(customers, linkTo(methodOn(CustomerController.class).all()).withSelfRel());
     }
 
     @PostMapping("/customers")
@@ -30,17 +41,18 @@ public class CustomerController {
         return repository.save(customer);
     }
 
-    @DeleteMapping("/customers/{userName}") 
+    @DeleteMapping("/customers/{userName}")
     void delete(@PathVariable String userName) {
-        repository.deleteById(userName); 
+        repository.deleteById(userName);
     }
-    
+
     @GetMapping("/customers/{userName}")
-    Customer get(@PathVariable String userName) {
-        return repository.findById(userName).orElseThrow(
-            () -> new CustomerNotFound(userName)
-        );
+    EntityModel<Customer> get(@PathVariable String userName) {
+        Customer customer = repository.findById(userName).orElseThrow(
+                () -> new CustomerNotFound(userName));
+        return assembler.toModel(customer);
     }
+
 }
 
 class CustomerNotFound extends RuntimeException {
