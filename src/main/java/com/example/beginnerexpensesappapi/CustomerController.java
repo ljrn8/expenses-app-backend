@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
+
 @RestController
 public class CustomerController {
 
@@ -52,7 +54,7 @@ public class CustomerController {
                 () -> new CustomerNotFound(userName));
         return assembler.toModel(customer);
     }
-
+    
 }
 
 class CustomerNotFound extends RuntimeException {
