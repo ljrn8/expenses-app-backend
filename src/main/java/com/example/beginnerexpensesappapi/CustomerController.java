@@ -51,7 +51,7 @@ public class CustomerController {
     }
 
     @GetMapping("/customers/{userName}")
-    EntityModel<Customer> get(@PathVariable String userName) {
+    EntityModel<Customer> get(@PathVariable String userName) throws CustomerNotFound {
         Customer customer = repository.findById(userName).orElseThrow(
                 () -> new CustomerNotFound(userName));
         return assembler.toModel(customer);
@@ -59,7 +59,7 @@ public class CustomerController {
 
     @PutMapping("/customers/{userName}")
     Customer updateCustomerPurchases(@PathVariable String userName,
-            @RequestBody HashMap<String, Integer> newPurchases) {
+            @RequestBody HashMap<String, Integer> newPurchases) throws CustomerNotFound {
         Customer customer = repository.findById(userName).orElseThrow(
                 () -> new CustomerNotFound(userName));
 
