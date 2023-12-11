@@ -27,7 +27,7 @@ public class CustomerController {
 
     CustomerController(CustomerRepository repository, CustomerModelAssembler assembler) {
         this.repository = repository;
-        this.assembler = assembler;
+        this.assembler = assembler; 
     }
 
     // http://localhost:8080/customers
@@ -36,7 +36,7 @@ public class CustomerController {
         List<EntityModel<Customer>> customers = repository.findAll().stream() //
                 .map(assembler::toModel) //
                 .collect(Collectors.toList());
-
+                
         return CollectionModel.of(customers, linkTo(methodOn(CustomerController.class).all()).withSelfRel());
     }
 
@@ -49,7 +49,7 @@ public class CustomerController {
     void delete(@PathVariable String userName) {
         repository.deleteById(userName);
     }
-
+ 
     @GetMapping("/customers/{userName}")
     EntityModel<Customer> get(@PathVariable String userName) throws CustomerNotFound {
         Customer customer = repository.findById(userName).orElseThrow(
@@ -62,18 +62,14 @@ public class CustomerController {
             @RequestBody HashMap<String, Integer> newPurchases) throws CustomerNotFound {
         Customer customer = repository.findById(userName).orElseThrow(
                 () -> new CustomerNotFound(userName));
-
         customer.setPurchases(newPurchases);
-
         return repository.save(customer);
     }
 
 }
 
 class CustomerNotFound extends RuntimeException {
-
     CustomerNotFound(String userName) {
         super("Could not find customer " + userName);
     }
-
 }

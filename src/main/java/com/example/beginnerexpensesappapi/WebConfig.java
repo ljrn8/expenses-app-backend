@@ -1,6 +1,7 @@
 package com.example.beginnerexpensesappapi;
 
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpHeaders;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -12,7 +13,13 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addMapping("/**")
                 .allowedOrigins("http://localhost:3000")
                 .allowedMethods("GET", "POST", "PUT", "DELETE")
-                .allowCredentials(true);
+                .allowCredentials(true)
+                .allowedHeaders(
+                    HttpHeaders.AUTHORIZATION, 
+                    HttpHeaders.CONTENT_TYPE,
+                    HttpHeaders.ACCEPT
+                ).maxAge(3600L);    
     }
+
 }
-// enables cross origin http requests
+// enables cross origin http requests & authorization
