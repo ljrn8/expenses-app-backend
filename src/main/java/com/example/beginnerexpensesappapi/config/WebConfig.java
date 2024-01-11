@@ -1,4 +1,4 @@
-package com.example.beginnerexpensesappapi;
+package com.example.beginnerexpensesappapi.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
@@ -15,10 +15,10 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowedMethods("GET", "POST", "PUT", "DELETE")
                 .allowCredentials(true)
                 .allowedHeaders(
-                    HttpHeaders.AUTHORIZATION, 
-                    HttpHeaders.CONTENT_TYPE,
-                    HttpHeaders.ACCEPT
-                ).maxAge(3600L);    
+                        HttpHeaders.AUTHORIZATION,
+                        HttpHeaders.CONTENT_TYPE,
+                        HttpHeaders.ACCEPT
+                ).maxAge(3600L);
     }
 
 }

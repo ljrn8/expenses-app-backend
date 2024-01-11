@@ -7,6 +7,12 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -25,10 +31,13 @@ public class CustomerController {
 
     private final CustomerModelAssembler assembler;
 
-    CustomerController(CustomerRepository repository, CustomerModelAssembler assembler) {
+    CustomerController(CustomerRepository repository, 
+                       CustomerModelAssembler assembler,
+                       AuthenticationManager authenticationManager) {
         this.repository = repository;
         this.assembler = assembler; 
     }
+
 
     // http://localhost:8080/customers
     @GetMapping("/customers")
@@ -46,11 +55,13 @@ public class CustomerController {
     }
 
     @DeleteMapping("/customers/{userName}")
+    @PreAuthorize("hasRole('USER')")
     void delete(@PathVariable String userName) {
         repository.deleteById(userName);
     }
  
     @GetMapping("/customers/{userName}")
+    @PreAuthorize("hasRole('USER')")
     EntityModel<Customer> get(@PathVariable String userName) throws CustomerNotFound {
         Customer customer = repository.findById(userName).orElseThrow(
                 () -> new CustomerNotFound(userName));
@@ -58,6 +69,7 @@ public class CustomerController {
     }
 
     @PutMapping("/customers/{userName}")
+    @PreAuthorize("hasRole('USER')")
     Customer updateCustomerPurchases(@PathVariable String userName,
             @RequestBody HashMap<String, Integer> newPurchases) throws CustomerNotFound {
         Customer customer = repository.findById(userName).orElseThrow(
@@ -68,8 +80,3 @@ public class CustomerController {
 
 }
 
-class CustomerNotFound extends RuntimeException {
-    CustomerNotFound(String userName) {
-        super("Could not find customer " + userName);
-    }
-}
