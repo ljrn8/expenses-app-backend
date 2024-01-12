@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.apache.tomcat.util.net.openssl.ciphers.Authentication;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
@@ -77,6 +78,29 @@ public class CustomerController {
         customer.setPurchases(newPurchases);
         return repository.save(customer);
     }
+
+
+
+    @PostMapping("/verification")
+    public ResponseEntity<Void> login(@RequestBody LoginRequest loginRequest) {
+
+        // authentication obj
+        UsernamePasswordAuthenticationToken authenticationRequest = UsernamePasswordAuthenticationToken.unauthenticated(
+                loginRequest.username(), loginRequest.password()
+        );
+
+        // TODO dep inj to get this method
+        Authentication authenticationResponse = authenticationManager.authenicate(authenticationRequest);
+
+        // check that username and PW are correct
+
+        // TODO if correct, save username and encoded PW in DB
+
+    }
+
+
+    // basically a local struct wiht auto assinged params
+    public record LoginRequest(String username, String password) { }
 
 }
 
