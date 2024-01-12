@@ -22,4 +22,3 @@ public class WebConfig implements WebMvcConfigurer {
     }
 
 }
-// enables cross origin http requests & authorization
