@@ -57,9 +57,8 @@ public class SecurityConfig {
 	}
 
 	@Bean
-	public AuthenticationManager authenticationManager(
-			UserDetailsService userDetailsService,
-			PasswordEncoder passwordEncoder) {
+	public AuthenticationManager authenticationManager(UserDetailsService userDetailsService,
+													   PasswordEncoder passwordEncoder) {
 
 		DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider();
 		authenticationProvider.setUserDetailsService(userDetailsService);
@@ -78,7 +77,7 @@ public class SecurityConfig {
 			.authorizeHttpRequests((authorize) -> authorize
 					.requestMatchers(HttpMethod.POST, "/verification", "/registration").permitAll()
 //					.requestMatchers(HttpMethod.GET, "/**").permitAll()
-					.anyRequest().authenticated()
+					.anyRequest().authenticated() // everyone else required authentication
 			)
 				// receiving UN and PW and snding back JWT (w/ public key in it)
 				.authenticationProvider(authenticationProvider())
@@ -125,6 +124,7 @@ public class SecurityConfig {
 				.password("{bcrypt}$2a$10$GRLdNijSQMUvl/au9ofL.eDwmoohzzS7.rmNSJZ.0FxO/BTk76klW")
 				.roles("USER", "ADMIN")
 				.build();
+
 		JdbcUserDetailsManager users = new JdbcUserDetailsManager(dataSource);
 		users.createUser(user);
 		users.createUser(admin);

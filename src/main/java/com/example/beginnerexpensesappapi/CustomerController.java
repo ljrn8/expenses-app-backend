@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.apache.tomcat.util.net.openssl.ciphers.Authentication;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
@@ -14,6 +13,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -80,6 +80,8 @@ public class CustomerController {
     }
 
 
+    @Autowired
+    AuthenticationManager authenticationManager;
 
     @PostMapping("/verification")
     public ResponseEntity<Void> login(@RequestBody LoginRequest loginRequest) {
@@ -89,13 +91,19 @@ public class CustomerController {
                 loginRequest.username(), loginRequest.password()
         );
 
-        // TODO dep inj to get this method
-        Authentication authenticationResponse = authenticationManager.authenicate(authenticationRequest);
+        try {
 
-        // check that username and PW are correct
+            Authentication authenticationResponse =
+                    this.authenticationManager.authenticate(authenticationRequest);
 
-        // TODO if correct, save username and encoded PW in DB
+        } catch(BadCredentialsException ex) {
 
+            // got wrong password or username
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+
+        }
+
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
 

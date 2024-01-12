@@ -30,7 +30,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final UserService userService;
 
 
-    /////// USER MADE REQEUEST TO SERVER WITH A JWT ->> ONLY SUBSEQUENT CALLS (not authentication)
+    /// USER MADE REQEUEST TO SERVER WITH A JWT ->> ONLY SUBSEQUENT CALLS (not authentication)
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
@@ -42,7 +42,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             if (StringUtils.hasText(jwt)) {
 
-                // security context ( Authentication manager ( authentication ) ) for this servlet
+                // sets the security context ( Authentication manager ( authentication ) ) for this servlet
                 UsernamePasswordAuthenticationToken authentication = jwtService.getAuthentication(jwt);
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
@@ -54,8 +54,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
+    /// JWT SHIT
     // HTTP request headers = JSON proprties EG "method: POST" ect
-    // "authentication: Bearer awtoih9w4htea[][rgp98jgoj-30iy3 ... " << encrypted JWT with public key in its signature
+    //
+    // "authentication: Bearer awtoih9wwayyryearye.aerawryyeauyeaurayaeye.arweyaeyeatueauearyawyarwy " << b64 encoded JWT (not encrypted) with public key in its signature
+    //                          ^ encoded headers    ^ encoded payload     ^ encrypted signature
+    //
+    // "The signature is created using the header, the payload, and the secret that is saved on the server."
     private String extractJwtFromRequest(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {

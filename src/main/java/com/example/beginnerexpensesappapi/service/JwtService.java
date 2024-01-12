@@ -11,6 +11,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
+import java.security.KeyPair;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -27,25 +28,32 @@ public class JwtService { // doing shit to jwt's
 
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
 
-        // Passwords do not go in the JWT
-        // String pw = (String) authentication.getCredentials();
-
-
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtExpirationInMs);
+
+
+        // generate key pair for jwt
+        KeyPair keys = Keys.keyPairFor(SignatureAlgorithm.ES512);
 
         // create jwt
         return Jwts.builder()
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date())
                 .setExpiration(expiryDate)
-                .signWith(
-                        Keys.hmacShaKeyFor(
-                                jwtSecret.getBytes(StandardCharsets.UTF_8)
-                        ),
-                        SignatureAlgorithm.HS512
-                )
+                // .signWith(
+
+                //         Keys.hmacShaKeyFor(
+                //                 jwtSecret.getBytes(StandardCharsets.UTF_8)
+                //         ),
+                //         SignatureAlgorithm.HS512
+                // )
+                .signWith(keys.getPrivate())
                 .compact();
+
+        // TODO 
+        // do i sign with private ? 
+        // where do i add the public key ? 
+        // where do i keep the keypair on the server
     }
 
     public UsernamePasswordAuthenticationToken getAuthentication(String token) {
