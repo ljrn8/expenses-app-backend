@@ -1,8 +1,9 @@
 package com.example.beginnerexpensesappapi;
 
+import com.example.beginnerexpensesappapi.service.CustomerService;
 import com.example.beginnerexpensesappapi.service.JwtService;
-import com.example.beginnerexpensesappapi.service.UserService;
 import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.UnsupportedJwtException;
 import jakarta.servlet.FilterChain;
@@ -26,9 +27,10 @@ import java.io.IOException;
 @RequiredArgsConstructor
 @Slf4j // see in logs
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
-    private final JwtService jwtService;
-    private final UserService userService;
 
+    private final JwtService jwtService; // efectively autwired my req args constructor (good practice?)
+
+    private final CustomerService customerService;
 
     /// USER MADE REQEUEST TO SERVER WITH A JWT ->> ONLY SUBSEQUENT CALLS (not authentication)
     @Override
@@ -42,9 +44,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             if (StringUtils.hasText(jwt)) {
 
-                // sets the security context ( Authentication manager ( authentication ) ) for this servlet
+                // sets the security context ( Authentication manager ( authentication ) ) for this thread
+
+                // TODO
+                // if (!jwtService.verifyToken(jwt, customerService)) throw new JwtException("invalid token");
+
                 UsernamePasswordAuthenticationToken authentication = jwtService.getAuthentication(jwt);
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                SecurityContextHolder.getContext().setAuthentication(authentication); // allows the @PreAuthorize
             }
 
         } catch (ExpiredJwtException | UnsupportedJwtException | MalformedJwtException ex) {

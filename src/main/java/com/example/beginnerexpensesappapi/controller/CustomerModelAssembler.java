@@ -1,10 +1,14 @@
-package com.example.beginnerexpensesappapi;
+package com.example.beginnerexpensesappapi.controller;
+
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 
+import com.example.beginnerexpensesappapi.Customer;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.server.RepresentationModelAssembler;
 import org.springframework.stereotype.Component;
+
+import com.example.beginnerexpensesappapi.controller.CustomerController;
 
 /**
  * from documentation for proper restfulness -
@@ -17,7 +21,7 @@ class CustomerModelAssembler implements RepresentationModelAssembler<Customer, E
     @Override
     public EntityModel<Customer> toModel(Customer customer) {
         return EntityModel.of(customer, // 
-                linkTo(methodOn(CustomerController.class).get(customer.getUserName())).withSelfRel(),
+                linkTo(methodOn(CustomerController.class).get(customer.getUsername())).withSelfRel(),
                 linkTo(methodOn(CustomerController.class).all()).withRel("customers"));
         }
 }

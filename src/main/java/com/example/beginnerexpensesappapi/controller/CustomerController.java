@@ -1,9 +1,11 @@
-package com.example.beginnerexpensesappapi;
+package com.example.beginnerexpensesappapi.controller;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
@@ -11,9 +13,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,37 +26,60 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.beginnerexpensesappapi.Customer;
+import com.example.beginnerexpensesappapi.CustomerRepository;
+import com.example.beginnerexpensesappapi.service.CustomerService;
+import com.mongodb.lang.NonNull;
+
+import jakarta.annotation.Nonnull;
+
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 
 @RestController
+@Log
 public class CustomerController {
 
     @Autowired
-    private final CustomerRepository repository;
+    private CustomerRepository repository;
 
-    private final CustomerModelAssembler assembler;
+    @Autowired
+    private AuthenticationProvider authenticationProvider;
 
-    CustomerController(CustomerRepository repository, 
-                       CustomerModelAssembler assembler,
-                       AuthenticationManager authenticationManager) {
-        this.repository = repository;
-        this.assembler = assembler; 
-    }
+    @Autowired
+    private PasswordEncoder passwordEncoder; // bcrypt
 
+    @Autowired
+    private CustomerService customerService; // TODO should replace autowiring the repo
+
+    @Autowired
+    private CustomerModelAssembler assembler;
 
     // http://localhost:8080/customers
     @GetMapping("/customers")
-    CollectionModel<EntityModel<Customer>> all() {
+    public CollectionModel<EntityModel<Customer>> all() {
         List<EntityModel<Customer>> customers = repository.findAll().stream() //
                 .map(assembler::toModel) //
                 .collect(Collectors.toList());
-                
-        return CollectionModel.of(customers, linkTo(methodOn(CustomerController.class).all()).withSelfRel());
+        
+        return CollectionModel.of(customers, linkTo(methodOn(
+                CustomerController.class).all()).withSelfRel());
     }
 
+/*          old shit
     @PostMapping("/customers")
     Customer newCustomer(@RequestBody Customer customer) {
         return repository.save(customer);
+    }
+*/
+
+    public record RegisterRequest(String username, String password) { }
+
+    @PostMapping("/register")
+    Customer registerNewCustomer(@RequestBody RegisterRequest request) {
+        String userName = request.username();
+        String plainTextPassword = request.password();
+        String encodedPassword = passwordEncoder.encode(plainTextPassword);
+        return customerService.registerNewCustomer(userName, encodedPassword);
     }
 
     @DeleteMapping("/customers/{userName}")
@@ -63,7 +90,7 @@ public class CustomerController {
  
     @GetMapping("/customers/{userName}")
     @PreAuthorize("hasRole('USER')")
-    EntityModel<Customer> get(@PathVariable String userName) throws CustomerNotFound {
+    public EntityModel<Customer> get(@PathVariable String userName) throws CustomerNotFound {
         Customer customer = repository.findById(userName).orElseThrow(
                 () -> new CustomerNotFound(userName));
         return assembler.toModel(customer);
@@ -80,8 +107,7 @@ public class CustomerController {
     }
 
 
-    @Autowired
-    AuthenticationManager authenticationManager;
+    
 
     @PostMapping("/verification")
     public ResponseEntity<Void> login(@RequestBody LoginRequest loginRequest) {
@@ -91,24 +117,39 @@ public class CustomerController {
                 loginRequest.username(), loginRequest.password()
         );
 
+
+
+        // try with encoded pw?
+        // UsernamePasswordAuthenticationToken authenticationRequest = UsernamePasswordAuthenticationToken.unauthenticated(
+        //         loginRequest.username(), passwordEncoder.encode(loginRequest.password())
+        // );
+
+        log.info("got these in body: " + loginRequest.username() + " | " + loginRequest.password());
+
         try {
 
+            log.info("about to try and authenticate a login");
+
             Authentication authenticationResponse =
-                    this.authenticationManager.authenticate(authenticationRequest);
+                    this.authenticationProvider.authenticate(authenticationRequest);
+
+
+            if (authenticationResponse.isAuthenticated()) {
+                log.info("was correct and is autheticated - sending OK http");
+            } else {
+                log.info("was not authenticated but didnt throw Ex, - sedning OK http");
+            }
+            return new ResponseEntity<>(HttpStatus.OK);
+ 
 
         } catch(BadCredentialsException ex) {
-
-            // got wrong password or username
+            log.info("wrong password / username - sending BAD_REQ http");
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-
         }
 
-        return new ResponseEntity<>(HttpStatus.OK);
     }
 
-
-    // basically a local struct wiht auto assinged params
+    // basically a local struct wiht auto assinged params (DTO?)
     public record LoginRequest(String username, String password) { }
-
 }
 

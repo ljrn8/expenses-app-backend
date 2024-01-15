@@ -1,7 +1,7 @@
 package com.example.beginnerexpensesappapi.config;
 
 import com.example.beginnerexpensesappapi.JwtAuthenticationFilter;
-import com.example.beginnerexpensesappapi.service.UserService;
+import com.example.beginnerexpensesappapi.service.CustomerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -27,9 +27,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import javax.sql.DataSource;
 
 
-// read this instead https://docs.spring.io/spring-security/reference/servlet/getting-started.html 
-// https://docs.spring.io/spring-security/reference/servlet/authentication/passwords/index.html#servlet-authentication-unpwd
-// whats a servlet
+	// need to go through this now ->> https://docs.spring.io/spring-security/reference/servlet/authentication/passwords/index.html#servlet-authentication-unpwd-input
+	// final thing ^^
 
 @Configuration
 @EnableWebSecurity
@@ -38,44 +37,27 @@ import javax.sql.DataSource;
 public class SecurityConfig {
 
 
-	// @Autowired
-    // private jwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
-
-    // @Autowired
-    // private JwtRequestFilter jwtRequestFilter;
-
 	private final JwtAuthenticationFilter jwtAuthenticationFilter;
-	private final UserService userService;
+	private final CustomerService customerService;
 	private final PasswordEncoder passwordEncoder;
 
+
+	// PASSWORD CHECKING HAPPENS INSIDE HERE
 	@Bean
 	public AuthenticationProvider authenticationProvider() {
 		DaoAuthenticationProvider authprovider = new DaoAuthenticationProvider();
-		authprovider.setUserDetailsService(userService.userDetailsService());
+		authprovider.setUserDetailsService(customerService);
 		authprovider.setPasswordEncoder(passwordEncoder);
 		return authprovider;
 	}
 
-	@Bean
-	public AuthenticationManager authenticationManager(UserDetailsService userDetailsService,
-													   PasswordEncoder passwordEncoder) {
-
-		DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider();
-		authenticationProvider.setUserDetailsService(userDetailsService);
-		authenticationProvider.setPasswordEncoder(passwordEncoder);
-
-		ProviderManager providerManager = new ProviderManager(authenticationProvider);
-		providerManager.setEraseCredentialsAfterAuthentication(false);
-
-		return providerManager;
-	}
-
+	// EVERYTHING HAPPENS HERE
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		http
 			.csrf(AbstractHttpConfigurer::disable)
 			.authorizeHttpRequests((authorize) -> authorize
-					.requestMatchers(HttpMethod.POST, "/verification", "/registration").permitAll()
+					.requestMatchers(HttpMethod.POST, "/verification", "/register", "/registration").permitAll()
 //					.requestMatchers(HttpMethod.GET, "/**").permitAll()
 					.anyRequest().authenticated() // everyone else required authentication
 			)
@@ -91,48 +73,10 @@ public class SecurityConfig {
 		return http.build();
 	}
 
-	// need to go through this now ->> https://docs.spring.io/spring-security/reference/servlet/authentication/passwords/index.html#servlet-authentication-unpwd-input
-	// final thing ^^
 
 
 
-	/// IN MEMORY VER
-	@Bean
-	 public UserDetailsService userDetailsService() {
-		// TODO find a way to connect bcrypt
-	 	UserDetails userDetails = User.withDefaultPasswordEncoder()
-	 		.username("user")
-	 		.password("password")
-	 		.roles("USER")
-	 		.build();
 
-	 	return new InMemoryUserDetailsManager(userDetails);
-	 }
-
-	 /// DATABASE VER
-	@Bean
-	UserDetailsManager users(DataSource dataSource) {
-
-		//// ADD USER
-		UserDetails user = User.builder()
-				.username("user")
-				.password("{bcrypt}$2a$10$GRLdNijSQMUvl/au9ofL.eDwmoohzzS7.rmNSJZ.0FxO/BTk76klW")
-				.roles("USER")
-				.build();
-		UserDetails admin = User.builder()
-				.username("admin")
-				.password("{bcrypt}$2a$10$GRLdNijSQMUvl/au9ofL.eDwmoohzzS7.rmNSJZ.0FxO/BTk76klW")
-				.roles("USER", "ADMIN")
-				.build();
-
-		JdbcUserDetailsManager users = new JdbcUserDetailsManager(dataSource);
-		users.createUser(user);
-		users.createUser(admin);
-		return users;
-
-
-		//// GET USERNAME PASSWORD
-	}
 
 
 	/*
