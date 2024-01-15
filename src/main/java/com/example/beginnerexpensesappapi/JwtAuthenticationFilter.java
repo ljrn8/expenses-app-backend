@@ -29,7 +29,6 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService; // efectively autwired my req args constructor (good practice?)
-
     private final CustomerService customerService;
 
     /// USER MADE REQEUEST TO SERVER WITH A JWT ->> ONLY SUBSEQUENT CALLS (not authentication)
@@ -42,6 +41,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             // get encrypted JWT from user request
             String jwt = extractJwtFromRequest(request);
 
+            // !!! only do the filter if it has a jwt
             if (StringUtils.hasText(jwt)) {
 
                 // sets the security context ( Authentication manager ( authentication ) ) for this thread
@@ -50,7 +50,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 // if (!jwtService.verifyToken(jwt, customerService)) throw new JwtException("invalid token");
 
                 UsernamePasswordAuthenticationToken authentication = jwtService.getAuthentication(jwt);
-                SecurityContextHolder.getContext().setAuthentication(authentication); // allows the @PreAuthorize
+
+                // allows the @PreAuthorize
+                SecurityContextHolder.getContext().setAuthentication(authentication); 
             }
 
         } catch (ExpiredJwtException | UnsupportedJwtException | MalformedJwtException ex) {

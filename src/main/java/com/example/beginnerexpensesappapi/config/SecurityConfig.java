@@ -3,11 +3,14 @@ package com.example.beginnerexpensesappapi.config;
 import com.example.beginnerexpensesappapi.JwtAuthenticationFilter;
 import com.example.beginnerexpensesappapi.service.CustomerService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.java.Log;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
@@ -30,6 +33,7 @@ import javax.sql.DataSource;
 	// need to go through this now ->> https://docs.spring.io/spring-security/reference/servlet/authentication/passwords/index.html#servlet-authentication-unpwd-input
 	// final thing ^^
 
+@Log
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
@@ -42,12 +46,17 @@ public class SecurityConfig {
 	private final PasswordEncoder passwordEncoder;
 
 
-	// PASSWORD CHECKING HAPPENS INSIDE HERE
 	@Bean
 	public AuthenticationProvider authenticationProvider() {
 		DaoAuthenticationProvider authprovider = new DaoAuthenticationProvider();
 		authprovider.setUserDetailsService(customerService);
 		authprovider.setPasswordEncoder(passwordEncoder);
+		authprovider.setPreAuthenticationChecks(userDetails -> {
+        if (userDetails.getPassword() == null || userDetails.getPassword().isEmpty()) {
+				log.info("! password null or emtpy");
+				throw new BadCredentialsException("Empty password");
+			}
+		});
 		return authprovider;
 	}
 
@@ -61,14 +70,14 @@ public class SecurityConfig {
 //					.requestMatchers(HttpMethod.GET, "/**").permitAll()
 					.anyRequest().authenticated() // everyone else required authentication
 			)
-				// receiving UN and PW and snding back JWT (w/ public key in it)
 				.authenticationProvider(authenticationProvider())
 
-				// receiving a HTTP request with (supposidly) a JWT in it
+				// receiving a HTTP request with a JWT in it (skipped if not present)
 				.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
 
-				.httpBasic(Customizer.withDefaults())
-				.formLogin(Customizer.withDefaults());
+				//// ** UsernamePasswordAuthenticationFilter happens here (default) **  ////
+
+				.httpBasic(Customizer.withDefaults());
 
 		return http.build();
 	}

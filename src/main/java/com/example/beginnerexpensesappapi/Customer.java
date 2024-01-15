@@ -35,7 +35,7 @@ public class Customer implements UserDetails {
 
     @Override
     public String getPassword() {
-        return null;
+        return this.encryptedPassword;
     }
 
 
