@@ -84,8 +84,43 @@ public class SecurityConfig {
 
 
 
+	/// IN MEMORY VER
+	/*@Bean
+	 public UserDetailsService userDetailsService() {
+		// TODO find a way to connect bcrypt
+	 	UserDetails userDetails = User.withDefaultPasswordEncoder()
+	 		.username("user")
+	 		.password("password")
+	 		.roles("USER")
+	 		.build();
+
+	 	return new InMemoryUserDetailsManager(userDetails);
+	 }
+*/
+	 /// DATABASE VER
+	/*@Bean
+	UserDetailsManager users(DataSource dataSource) {
+
+		//// ADD USER
+		UserDetails user = User.builder()
+				.username("user")
+				.password("{bcrypt}$2a$10$GRLdNijSQMUvl/au9ofL.eDwmoohzzS7.rmNSJZ.0FxO/BTk76klW")
+				.roles("USER")
+				.build();
+		UserDetails admin = User.builder()
+				.username("admin")
+				.password("{bcrypt}$2a$10$GRLdNijSQMUvl/au9ofL.eDwmoohzzS7.rmNSJZ.0FxO/BTk76klW")
+				.roles("USER", "ADMIN")
+				.build();
+		JdbcUserDetailsManager users = new JdbcUserDetailsManager(dataSource);
+		users.createUser(user);
+		users.createUser(admin);
+		return users;
 
 
+		//// GET USERNAME PASSWORD
+	}
+*/
 
 	/*
 

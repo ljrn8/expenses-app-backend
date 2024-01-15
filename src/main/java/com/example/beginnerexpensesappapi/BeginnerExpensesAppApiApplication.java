@@ -13,7 +13,7 @@ import org.springframework.data.mongodb.repository.config.EnableMongoRepositorie
 // final ^^
 
 @SpringBootApplication
-@EnableMongoRepositories(basePackageClasses = CustomerRepository.class)
+@EnableMongoRepositories()
 public class BeginnerExpensesAppApiApplication {
 
 	public static void main(String[] args) {
