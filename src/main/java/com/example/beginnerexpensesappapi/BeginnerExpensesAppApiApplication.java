@@ -27,8 +27,7 @@ public class BeginnerExpensesAppApiApplication {
 	@Bean
 	CommandLineRunner initDatabase(CustomerRepository repository) {
 		return args -> {
-			customerService.registerNewCustomerFromPlainText("trythis", "kys");
-			customerService.registerNewCustomerFromPlainText("kys", "syk");
+			customerService.registerNewCustomerFromPlainText("rose", "esor");
 		};
 	}
 

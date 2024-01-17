@@ -2,13 +2,20 @@ package com.example.beginnerexpensesappapi.service;
 
 import com.example.beginnerexpensesappapi.Customer;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import lombok.Data;
+import lombok.extern.java.Log;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.config.core.GrantedAuthorityDefaults;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -16,9 +23,12 @@ import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.security.KeyPair;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 
 @Service
+@Log
 public class JwtService { // doing shit to jwt's
 
 
@@ -27,6 +37,7 @@ public class JwtService { // doing shit to jwt's
 
     @Value("${jwt.expiration}")
     private long jwtExpirationInMs;
+
 
     public String generateToken(Authentication authentication) {
 
@@ -40,8 +51,8 @@ public class JwtService { // doing shit to jwt's
         // generate key pair for jwt
         // KeyPair keys = Keys.keyPairFor(SignatureAlgorithm.RS512);
 
-        // SYMMETRIC
-        Key jwtPublicKey = Keys.hmacShaKeyFor(jwtSecretKey.getBytes());
+        // SYMMETRIC 
+        Key key = Keys.hmacShaKeyFor(jwtSecretKey.getBytes());
 
 
         // create jwt
@@ -56,20 +67,48 @@ public class JwtService { // doing shit to jwt's
                 //         ),
                 //         SignatureAlgorithm.HS512
                 // )
-                .signWith(jwtPublicKey, SignatureAlgorithm.HS512)
+                .signWith(key, SignatureAlgorithm.HS512)
                 .compact();
 
     }
 
-
-    public UsernamePasswordAuthenticationToken getAuthentication(String token) {
-        String username = Jwts.parser().setSigningKey(jwtSecretKey).parseClaimsJws(token).getBody().getSubject();
-        return new UsernamePasswordAuthenticationToken(username, null, new ArrayList<>());
+    public Claims extractClaims(String token) {
+        return (Claims) Jwts.parserBuilder()
+            .setSigningKey(
+                Keys.hmacShaKeyFor(jwtSecretKey.getBytes())
+            )
+            // .requireIssuer("https://issuer.example.com")
+            .build()
+            .parse(token).getBody();    
     }
 
-    public boolean verifyToken(String token, Customer customer) {
-        String username = Jwts.parser().setSigningKey(jwtSecretKey).parseClaimsJws(token).getBody().getSubject();
-        return (username.equals(customer.getUsername())); // TODO this is a circular check ??????
+
+    public UsernamePasswordAuthenticationToken getAuthentication(String token) {
+        log.info("reviced this token from the client: {" + token + "}");
+        Claims claims = extractClaims(token);
+        String username = claims.getSubject();
+
+        // all authorities are users - no admins
+        List<SimpleGrantedAuthority> authorities = Arrays.asList(
+            new SimpleGrantedAuthority("user")
+        ); 
+        return new UsernamePasswordAuthenticationToken(username, null, authorities);
+    }
+
+    public boolean verifyToken(String token, String username) throws JwtException {        
+        Claims claims = extractClaims(token);
+        Date expiryDate = claims.getExpiration();
+        String claimedUsername = claims.getSubject();
+        // TODO
+        // if (expiryDate.after(new Date())) { 
+        //     log.info(username + " - invalid token: expired");
+        //     throw new ExpiredJwtException(null, claims, claimedUsername);
+        // }
+        if (!claimedUsername.equals(username)) {
+            log.info(username + " - invalid token: username mismatch");
+            throw new JwtException("usernmae mismatch in jwt");
+        }
+        return true;
     }
 
 

@@ -3,6 +3,8 @@ package com.example.beginnerexpensesappapi.controller;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import lombok.extern.java.Log;
@@ -11,6 +13,7 @@ import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -18,6 +21,7 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -67,39 +71,79 @@ public class CustomerController {
                 CustomerController.class).all()).withSelfRel());
     }
 
-   
+
     /// !! protected endpoints /// 
-    // DONT WORRY (every other route requries authentication as per secfilter chain)
     // TODO give this shit its own controller
+    // TODO fix this sinful method
+    @GetMapping("/customers/me") // i grab ur username in the jwt
+    public ResponseEntity<Customer> get() {
+        
+        // jwt set to authentication by filter
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-    @DeleteMapping("/customers/{userName}")
-    @PreAuthorize("#userName == authentication.principal.username")
-    void delete(@PathVariable String userName) {
-        repository.deleteById(userName);
+        if (!authentication.isAuthenticated()) {
+            return ResponseEntity.internalServerError().body(null);
+        }
+
+        // Retrieve customer details based on the authenticated user
+        String username = authentication.getName();
+        if (username == null) {
+            return ResponseEntity.internalServerError().body(null);
+        };
+
+        // TODO this NEEDS to be a customer service method
+        Customer customer = null;
+        try {
+            customer = repository.findById(username).get();
+        } catch(NoSuchElementException e) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        return customer != null ? ResponseEntity.ok(customer) 
+            : ResponseEntity.internalServerError().body(null);
     }
+
+    @PutMapping("/customers/me/purchases")
+    public ResponseEntity<Customer> updateCustomerPurchases(@RequestBody HashMap<String, Integer> newPurchases) {
+
+        // TODO redundant code (check auth and not null password in seperate method - easy)
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (!authentication.isAuthenticated()) {
+            return ResponseEntity.internalServerError().body(null);
+        }
+        String username = authentication.getName();
+
+        Optional<Customer> optionalCustomer = repository.findById(username);
+        if (optionalCustomer.isPresent()) {
+            Customer customer = optionalCustomer.get();
+            customer.setPurchases(newPurchases);
+            Customer updatedCustomer = repository.save(customer);
+            return ResponseEntity.ok(updatedCustomer);
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+    }
+
+    // @DeleteMapping("/customers/{userName}")
+    // @PreAuthorize("#userName == authentication.principal.username")
+    // void delete(@PathVariable String userName) {
+    //     repository.deleteById(userName);
+    // }
  
-    @GetMapping("/customers/{userName}")
-    @PreAuthorize("#userName == authentication.principal.username")
-    public EntityModel<Customer> get(@PathVariable String userName) throws CustomerNotFound {
-        Customer customer = repository.findById(userName).orElseThrow(
-                () -> new CustomerNotFound(userName));
-        return assembler.toModel(customer);
-    }
+    // @GetMapping("/customers/{userName}")
+    // @PreAuthorize("#userName == authentication.principal.username")
+    // // @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    // public EntityModel<Customer> get(@PathVariable String userName) throws CustomerNotFound {
+    //     Customer customer = repository.findById(userName).orElseThrow(
+    //             () -> new CustomerNotFound(userName));
+    //     return assembler.toModel(customer);
+    // }
 
-    ////// !! //////
+ 
 
+    // REGISTRATION 
 
-    /* REGISTRATION - one of these (both) aint right
-
-    @PutMapping("/customers/{userName}")
-    @PreAuthorize("#userName == authentication.principal.username")
-    Customer updateCustomerPurchases(@PathVariable String userName,
-            @RequestBody HashMap<String, Integer> newPurchases) throws CustomerNotFound {
-        Customer customer = repository.findById(userName).orElseThrow(
-                () -> new CustomerNotFound(userName));
-        customer.setPurchases(newPurchases);
-        return repository.save(customer);
-    }
+    public record RegisterRequest(String username, String password) { }
 
     @PostMapping("/register")
     Customer registerNewCustomer(@RequestBody RegisterRequest request) {
@@ -109,13 +153,12 @@ public class CustomerController {
         return customerService.registerNewCustomer(userName, encodedPassword);
     } 
     
-     @PostMapping("/customers")
-    Customer newCustomer(@RequestBody Customer customer) {
-        return repository.save(customer);
-    }*/
+    // AUTHENTICATION
 
     @Autowired
     private JwtService jwtService;
+
+    public record LoginRequest(String username, String password) { }
 
     @PostMapping("/verification")
     public ResponseEntity<String> login(@RequestBody LoginRequest loginRequest) {
@@ -147,7 +190,5 @@ public class CustomerController {
         }
     }
 
-    public record RegisterRequest(String username, String password) { }
-    public record LoginRequest(String username, String password) { }
 }
 

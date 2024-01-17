@@ -5,6 +5,7 @@ import com.example.beginnerexpensesappapi.service.CustomerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.java.Log;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -37,13 +38,11 @@ import javax.sql.DataSource;
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
-@RequiredArgsConstructor
 public class SecurityConfig {
-
-
-	private final JwtAuthenticationFilter jwtAuthenticationFilter;
-	private final CustomerService customerService;
-	private final PasswordEncoder passwordEncoder;
+	
+	@Autowired private JwtAuthenticationFilter jwtAuthenticationFilter;
+	@Autowired private CustomerService customerService;
+	@Autowired private PasswordEncoder passwordEncoder;
 
 
 	@Bean
@@ -72,7 +71,7 @@ public class SecurityConfig {
 			)
 				.authenticationProvider(authenticationProvider())
 
-				// receiving a HTTP request with a JWT in it (skipped if not present)
+				// process jWT if receiving a HTTP request with a JWT in it (skipped if not present)
 				.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
 
 				//// ** UsernamePasswordAuthenticationFilter happens here (default) **  ////

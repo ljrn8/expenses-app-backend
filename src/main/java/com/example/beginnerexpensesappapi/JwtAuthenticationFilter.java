@@ -41,23 +41,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             // get encrypted JWT from user request
             String jwt = extractJwtFromRequest(request);
 
-            // !!! only do the filter if it has a jwt
             if (StringUtils.hasText(jwt)) {
-
-                // sets the security context ( Authentication manager ( authentication ) ) for this thread
-
-                // TODO
-                // if (!jwtService.verifyToken(jwt, customerService)) throw new JwtException("invalid token");
-
                 UsernamePasswordAuthenticationToken authentication = jwtService.getAuthentication(jwt);
+                String username = (String) authentication.getPrincipal();
+                if (!jwtService.verifyToken(jwt, username)) throw new JwtException("invalid token");
 
                 // allows the @PreAuthorize
                 SecurityContextHolder.getContext().setAuthentication(authentication); 
             }
 
         } catch (ExpiredJwtException | UnsupportedJwtException | MalformedJwtException ex) {
-            System.out.println("!!!!!!!!!!!!!!");
-        }
+            System.out.println("fuck off with that shitty jwt -> " + ex.toString());
+        } 
 
         filterChain.doFilter(request, response);
     }
@@ -72,7 +67,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private String extractJwtFromRequest(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
-            return bearerToken.substring(7); // literally GET THE JWT FROM A HTTP REQUEST ('7' is excluding the 'bearer ' part)
+            return bearerToken.substring(7); 
         }
         return null;
     }
