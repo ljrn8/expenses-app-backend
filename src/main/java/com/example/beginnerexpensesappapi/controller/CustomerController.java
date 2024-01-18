@@ -23,6 +23,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -146,11 +147,20 @@ public class CustomerController {
     public record RegisterRequest(String username, String password) { }
 
     @PostMapping("/register")
-    Customer registerNewCustomer(@RequestBody RegisterRequest request) {
+    ResponseEntity<Customer> registerNewCustomer(@RequestBody RegisterRequest request) {
         String userName = request.username();
         String plainTextPassword = request.password();
         String encodedPassword = passwordEncoder.encode(plainTextPassword);
-        return customerService.registerNewCustomer(userName, encodedPassword);
+        
+        if (userName == null || plainTextPassword == null) { 
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build(); 
+        }
+        
+        if (repository.existsById(userName)) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).build(); 
+        }
+
+        return ResponseEntity.ok(customerService.registerNewCustomer(userName, encodedPassword));
     } 
     
     // AUTHENTICATION
