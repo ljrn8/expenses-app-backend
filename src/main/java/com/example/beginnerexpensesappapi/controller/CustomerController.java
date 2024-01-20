@@ -92,7 +92,7 @@ public class CustomerController {
 
         // Retrieve customer details based on the authenticated user
         String username = authentication.getName();
-        if (username === null) {
+        if (username == null) {
             return ResponseEntity.internalServerError().body(null);
         };
 
@@ -156,7 +156,7 @@ public class CustomerController {
         String plainTextPassword = request.password();
         String encodedPassword = passwordEncoder.encode(plainTextPassword);
         
-        if (userName === null || plainTextPassword === null) { 
+        if (userName == null || plainTextPassword == null) { 
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build(); 
         }
         
@@ -192,9 +192,14 @@ public class CustomerController {
             if (authenticationResponse.isAuthenticated()) {
                 log.info("was correct and is autheticated - sending OK http and JWT");
                 String jwt = jwtService.generateToken(authenticationResponse);
-                return ResponseEntity.ok()
-                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwt)
-                    .body("login successful, find jwt in authorization header (keep \'bearer \' in it)");
+
+                /// use to be in header (unusable) ///
+                // return ResponseEntity.ok()
+                //     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwt)
+                //     .body("login successful, find jwt in authorization header (keep \'bearer \' in it)");
+
+                // now in body
+                return ResponseEntity.ok("Bearer " + jwt);
 
             } else {
                 log.info("was not authenticated but didnt throw Ex, - sedning UNUATHERIZED http");
