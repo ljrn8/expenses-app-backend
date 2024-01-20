@@ -14,6 +14,7 @@ import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -30,6 +31,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.beginnerexpensesappapi.Customer;
@@ -42,8 +45,9 @@ import jakarta.annotation.Nonnull;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 
-@RestController
 @Log
+@RestController
+@CrossOrigin(origins = "http://localhost:3000")
 public class CustomerController {
 
     @Autowired
@@ -61,22 +65,22 @@ public class CustomerController {
     @Autowired
     private CustomerModelAssembler assembler;
 
-    // http://localhost:8080/customers
-    @GetMapping("/customers")
-    public CollectionModel<EntityModel<Customer>> all() {
-        List<EntityModel<Customer>> customers = repository.findAll().stream() //
-                .map(assembler::toModel) //
-                .collect(Collectors.toList());
+
+    // // http://localhost:8080/customers
+    // @GetMapping("/customers")
+    // public CollectionModel<EntityModel<Customer>> all() {
+    //     List<EntityModel<Customer>> customers = repository.findAll().stream() //
+    //             .map(assembler::toModel) //
+    //             .collect(Collectors.toList());
         
-        return CollectionModel.of(customers, linkTo(methodOn(
-                CustomerController.class).all()).withSelfRel());
-    }
+    //     return CollectionModel.of(customers, linkTo(methodOn(
+    //             CustomerController.class).all()).withSelfRel());
+    // }
 
 
-    /// !! protected endpoints /// 
     // TODO give this shit its own controller
     // TODO fix this sinful method
-    @GetMapping("/customers/me") // i grab ur username in the jwt
+    @GetMapping(path = "/customers/me") // i grab ur username in the jwt
     public ResponseEntity<Customer> get() {
         
         // jwt set to authentication by filter
@@ -88,7 +92,7 @@ public class CustomerController {
 
         // Retrieve customer details based on the authenticated user
         String username = authentication.getName();
-        if (username == null) {
+        if (username === null) {
             return ResponseEntity.internalServerError().body(null);
         };
 
@@ -104,7 +108,7 @@ public class CustomerController {
             : ResponseEntity.internalServerError().body(null);
     }
 
-    @PutMapping("/customers/me/purchases")
+    @PutMapping(path = "/customers/me/purchases", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Customer> updateCustomerPurchases(@RequestBody HashMap<String, Integer> newPurchases) {
 
         // TODO redundant code (check auth and not null password in seperate method - easy)
@@ -146,13 +150,13 @@ public class CustomerController {
 
     public record RegisterRequest(String username, String password) { }
 
-    @PostMapping("/register")
+    @PostMapping(path = "/register", consumes = MediaType.APPLICATION_JSON_VALUE)
     ResponseEntity<Customer> registerNewCustomer(@RequestBody RegisterRequest request) {
         String userName = request.username();
         String plainTextPassword = request.password();
         String encodedPassword = passwordEncoder.encode(plainTextPassword);
         
-        if (userName == null || plainTextPassword == null) { 
+        if (userName === null || plainTextPassword === null) { 
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build(); 
         }
         
@@ -168,14 +172,18 @@ public class CustomerController {
     @Autowired
     private JwtService jwtService;
 
+    // DTO
     public record LoginRequest(String username, String password) { }
 
-    @PostMapping("/verification")
+    @PostMapping(path = "/verification", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> login(@RequestBody LoginRequest loginRequest) {
         // authentication obj
         UsernamePasswordAuthenticationToken authenticationRequest = 
             UsernamePasswordAuthenticationToken.unauthenticated(
                     loginRequest.username(), loginRequest.password());
+
+        log.info("recieved this from frontend: " + loginRequest.username() + loginRequest.password());
+
         try {
             log.info("about to try and authenticate a login");
             Authentication authenticationResponse =

@@ -9,9 +9,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 
 
-// jwt ->> https://dev.to/abhi9720/a-comprehensive-guide-to-jwt-authentication-with-spring-boot-117p
-// final ^^
-
 @SpringBootApplication
 @EnableMongoRepositories()
 public class BeginnerExpensesAppApiApplication {

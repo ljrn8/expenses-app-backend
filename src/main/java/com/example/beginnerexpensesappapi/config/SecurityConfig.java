@@ -2,6 +2,8 @@ package com.example.beginnerexpensesappapi.config;
 
 import com.example.beginnerexpensesappapi.JwtAuthenticationFilter;
 import com.example.beginnerexpensesappapi.service.CustomerService;
+
+import java.util.Arrays;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.java.Log;
 
@@ -27,6 +29,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.UserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.Collections;
 
 import javax.sql.DataSource;
 
@@ -66,7 +73,7 @@ public class SecurityConfig {
 			.csrf(AbstractHttpConfigurer::disable)
 			.authorizeHttpRequests((authorize) -> authorize
 					.requestMatchers(HttpMethod.POST, "/verification", "/register", "/registration").permitAll()
-//					.requestMatchers(HttpMethod.GET, "/**").permitAll()
+					.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 					.anyRequest().authenticated() // everyone else required authentication
 			)
 				.authenticationProvider(authenticationProvider())
@@ -81,46 +88,21 @@ public class SecurityConfig {
 		return http.build();
 	}
 
+	// CORS
+	@Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        final CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(Collections.unmodifiableList(Arrays.asList("*")));
+        configuration.setAllowedMethods(Collections.unmodifiableList(Arrays.asList(
+			"HEAD", "GET", "POST", "PUT", "DELETE", "PATCH"
+		)));
+        configuration.setAllowCredentials(true);
+        configuration.setAllowedHeaders(Collections.unmodifiableList(Arrays.asList("Authorization", "Cache-Control", "Content-Type")));
+        final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
 
-
-
-	/// IN MEMORY VER
-	/*@Bean
-	 public UserDetailsService userDetailsService() {
-		// TODO find a way to connect bcrypt
-	 	UserDetails userDetails = User.withDefaultPasswordEncoder()
-	 		.username("user")
-	 		.password("password")
-	 		.roles("USER")
-	 		.build();
-
-	 	return new InMemoryUserDetailsManager(userDetails);
-	 }
-*/
-	 /// DATABASE VER
-	/*@Bean
-	UserDetailsManager users(DataSource dataSource) {
-
-		//// ADD USER
-		UserDetails user = User.builder()
-				.username("user")
-				.password("{bcrypt}$2a$10$GRLdNijSQMUvl/au9ofL.eDwmoohzzS7.rmNSJZ.0FxO/BTk76klW")
-				.roles("USER")
-				.build();
-		UserDetails admin = User.builder()
-				.username("admin")
-				.password("{bcrypt}$2a$10$GRLdNijSQMUvl/au9ofL.eDwmoohzzS7.rmNSJZ.0FxO/BTk76klW")
-				.roles("USER", "ADMIN")
-				.build();
-		JdbcUserDetailsManager users = new JdbcUserDetailsManager(dataSource);
-		users.createUser(user);
-		users.createUser(admin);
-		return users;
-
-
-		//// GET USERNAME PASSWORD
-	}
-*/
 
 	/*
 
