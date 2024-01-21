@@ -3,6 +3,7 @@ package com.example.beginnerexpensesappapi.controller;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -108,12 +109,26 @@ public class CustomerController {
             : ResponseEntity.internalServerError().body(null);
     }
 
-    @PutMapping(path = "/customers/me/purchases", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Customer> updateCustomerPurchases(@RequestBody HashMap<String, Integer> newPurchases) {
+    private record Purchases(int apples, int bananas, int oranges) { }
 
-        // TODO redundant code (check auth and not null password in seperate method - easy)
+    @PutMapping(path = "/customers/me/purchases", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Customer> updateCustomerPurchases(@RequestBody Purchases purchases) {
+
+        log.info("received update purchases request with " + purchases);
+
+        // TODO make a DTO mapper component and put there instead
+        HashMap<String, Integer> newPurchases = new HashMap<>(Map.of(
+            "bananas", purchases.bananas,
+            "apples", purchases.apples,
+            "oranges", purchases.oranges 
+        ));
+
+        log.info("DTO converted to this hashmap " + newPurchases.toString());
+
+        // TODO redundant code (check auth and not null password in seperate service level method - easy)
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (!authentication.isAuthenticated()) {
+            log.info("authentication object was not authenticated");
             return ResponseEntity.internalServerError().body(null);
         }
         String username = authentication.getName();

@@ -47,9 +47,15 @@ import javax.sql.DataSource;
 @EnableMethodSecurity
 public class SecurityConfig {
 	
-	@Autowired private JwtAuthenticationFilter jwtAuthenticationFilter;
-	@Autowired private CustomerService customerService;
-	@Autowired private PasswordEncoder passwordEncoder;
+	
+	@Autowired 
+	private JwtAuthenticationFilter jwtAuthenticationFilter;
+	
+	@Autowired 
+	private CustomerService customerService;
+	
+	@Autowired 
+	private PasswordEncoder passwordEncoder;
 
 
 	@Bean
@@ -66,7 +72,6 @@ public class SecurityConfig {
 		return authprovider;
 	}
 
-	// EVERYTHING HAPPENS HERE
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		http

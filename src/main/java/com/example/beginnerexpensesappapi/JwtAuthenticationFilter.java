@@ -11,6 +11,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.java.Log;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -23,13 +24,13 @@ import java.io.IOException;
 /**
  * Takes in JWTs from the user and sets the security context holder with an authorization obj from it
  */
+@Log
 @Component
-@RequiredArgsConstructor
+@RequiredArgsConstructor // subsitutes autow
 @Slf4j // see in logs
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService; // efectively autwired my req args constructor (good practice?)
-    private final CustomerService customerService;
 
     /// USER MADE REQEUEST TO SERVER WITH A JWT ->> ONLY SUBSEQUENT CALLS (not authentication)
     @Override
@@ -37,7 +38,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
         try {
-
+            
+            log.info("recieved request" + request.toString() + "about to extract jwt .. ");
             // get encrypted JWT from user request
             String jwt = extractJwtFromRequest(request);
 
@@ -66,6 +68,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     // "The signature is created using the header, the payload, and the secret that is saved on the server."
     private String extractJwtFromRequest(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
+        log.info("found this in the authorization header: " + bearerToken);
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
             return bearerToken.substring(7); 
         }
