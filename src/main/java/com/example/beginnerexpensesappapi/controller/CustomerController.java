@@ -1,24 +1,17 @@
 package com.example.beginnerexpensesappapi.controller;
 
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
+import com.example.beginnerexpensesappapi.PurchasesDTO;
+import com.example.beginnerexpensesappapi.UsernamePasswordDTO;
+import com.example.beginnerexpensesappapi.service.DTOService;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.hateoas.CollectionModel;
-import org.springframework.hateoas.EntityModel;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -26,25 +19,16 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.beginnerexpensesappapi.Customer;
 import com.example.beginnerexpensesappapi.CustomerRepository;
 import com.example.beginnerexpensesappapi.service.CustomerService;
 import com.example.beginnerexpensesappapi.service.JwtService;
-import com.mongodb.lang.NonNull;
-
-import jakarta.annotation.Nonnull;
-
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 
 @Log
 @RestController
@@ -66,17 +50,11 @@ public class CustomerController {
     @Autowired
     private CustomerModelAssembler assembler;
 
+    @Autowired
+    private DTOService dtoService;
 
-    // // http://localhost:8080/customers
-    // @GetMapping("/customers")
-    // public CollectionModel<EntityModel<Customer>> all() {
-    //     List<EntityModel<Customer>> customers = repository.findAll().stream() //
-    //             .map(assembler::toModel) //
-    //             .collect(Collectors.toList());
-        
-    //     return CollectionModel.of(customers, linkTo(methodOn(
-    //             CustomerController.class).all()).withSelfRel());
-    // }
+    @Autowired
+    private JwtService jwtService;
 
 
     // TODO give this shit its own controller
@@ -109,20 +87,12 @@ public class CustomerController {
             : ResponseEntity.internalServerError().body(null);
     }
 
-    private record Purchases(int apples, int bananas, int oranges) { }
 
     @PutMapping(path = "/customers/me/purchases", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Customer> updateCustomerPurchases(@RequestBody Purchases purchases) {
+    public ResponseEntity<Customer> updateCustomerPurchases(@RequestBody PurchasesDTO purchasesDTO) {
 
-        log.info("received update purchases request with " + purchases);
-
-        // TODO make a DTO mapper component and put there instead
-        HashMap<String, Integer> newPurchases = new HashMap<>(Map.of(
-            "bananas", purchases.bananas,
-            "apples", purchases.apples,
-            "oranges", purchases.oranges 
-        ));
-
+        log.info("received update purchases request with " + purchasesDTO);
+        HashMap<String, Integer> newPurchases = dtoService.PurchasestoHash(purchasesDTO);
         log.info("DTO converted to this hashmap " + newPurchases.toString());
 
         // TODO redundant code (check auth and not null password in seperate service level method - easy)
@@ -143,23 +113,6 @@ public class CustomerController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         }
     }
-
-    // @DeleteMapping("/customers/{userName}")
-    // @PreAuthorize("#userName == authentication.principal.username")
-    // void delete(@PathVariable String userName) {
-    //     repository.deleteById(userName);
-    // }
- 
-    // @GetMapping("/customers/{userName}")
-    // @PreAuthorize("#userName == authentication.principal.username")
-    // // @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    // public EntityModel<Customer> get(@PathVariable String userName) throws CustomerNotFound {
-    //     Customer customer = repository.findById(userName).orElseThrow(
-    //             () -> new CustomerNotFound(userName));
-    //     return assembler.toModel(customer);
-    // }
-
- 
 
     // REGISTRATION 
 
@@ -184,20 +137,15 @@ public class CustomerController {
     
     // AUTHENTICATION
 
-    @Autowired
-    private JwtService jwtService;
-
-    // DTO
-    public record LoginRequest(String username, String password) { }
 
     @PostMapping(path = "/verification", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<String> login(@RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<String> login(@RequestBody UsernamePasswordDTO loginRequest) {
         // authentication obj
         UsernamePasswordAuthenticationToken authenticationRequest = 
             UsernamePasswordAuthenticationToken.unauthenticated(
-                    loginRequest.username(), loginRequest.password());
+                    loginRequest.getUsername(), loginRequest.getPassword());
 
-        log.info("recieved this from frontend: " + loginRequest.username() + loginRequest.password());
+        log.info("recieved this from frontend: " + loginRequest.getUsername() + loginRequest.getPassword());
 
         try {
             log.info("about to try and authenticate a login");
@@ -206,12 +154,7 @@ public class CustomerController {
 
             if (authenticationResponse.isAuthenticated()) {
                 log.info("was correct and is autheticated - sending OK http and JWT");
-                String jwt = jwtService.generateToken(authenticationResponse);
-
-                /// use to be in header (unusable) ///
-                // return ResponseEntity.ok()
-                //     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwt)
-                //     .body("login successful, find jwt in authorization header (keep \'bearer \' in it)");
+                String jwt = this.jwtService.generateToken(authenticationResponse);
 
                 // now in body
                 return ResponseEntity.ok("Bearer " + jwt);
