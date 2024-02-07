@@ -65,7 +65,7 @@ public class SecurityConfig {
 		authprovider.setPasswordEncoder(passwordEncoder);
 		authprovider.setPreAuthenticationChecks(userDetails -> {
         if (userDetails.getPassword() == null || userDetails.getPassword().isEmpty()) {
-				log.info("! password null or emtpy");
+				log.info("! password null or empty");
 				throw new BadCredentialsException("Empty password");
 			}
 		});
@@ -78,8 +78,9 @@ public class SecurityConfig {
 			.csrf(AbstractHttpConfigurer::disable)
 			.authorizeHttpRequests((authorize) -> authorize
 					.requestMatchers(HttpMethod.POST, "/verification", "/register", "/registration").permitAll()
+					.requestMatchers(HttpMethod.GET, "/test").permitAll() // TODO
 					.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-					.anyRequest().authenticated() // everyone else required authentication
+					.anyRequest().authenticated()
 			)
 				.authenticationProvider(authenticationProvider())
 

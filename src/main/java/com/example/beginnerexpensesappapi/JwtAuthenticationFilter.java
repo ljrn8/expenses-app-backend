@@ -20,6 +20,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.security.SignatureException;
 
 /**
  * Takes in JWTs from the user and sets the security context holder with an authorization obj from it
@@ -52,11 +53,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authentication); 
             }
 
-        } catch (ExpiredJwtException | UnsupportedJwtException | MalformedJwtException ex) {
-            System.out.println("fuck off with that shitty jwt -> " + ex.toString());
-        } 
+            filterChain.doFilter(request, response);
 
-        filterChain.doFilter(request, response);
+        } catch (SignatureException | JwtException e) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().println("Invalid signature: " + e.getMessage());
+        }
     }
 
     /// JWT SHIT

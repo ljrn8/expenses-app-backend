@@ -1,10 +1,10 @@
 package com.example.beginnerexpensesappapi.service;
 
-import java.util.HashMap;
-import java.util.NoSuchElementException;
-import java.util.Optional;
+import java.util.*;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.lang.NonNull;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -29,33 +29,21 @@ public class CustomerService implements UserDetailsService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    public void registerNewCustomerFromPlainText(@NonNull String username, @NonNull String password) {
-        // UserDetails ud = User.builder()
-        //         .username(username)
-        //         .password(passwordEncoder.encode(password))
-        //         .roles("user")
-        //         .build();
+    public List<Customer> fetchAll() {
+        return repository.findAll();
+    }
 
-        // Customer newCustomer = (Customer) ud;
-
+    public Customer registerNewCustomerFromPlainText(@NonNull String username, @NonNull String password) {
         if (repository.existsById(username)) {
-            log.info("not addind customer, " + username + "already exists");
+            log.info("ignoring adding customer: " + username + " -> already exists");
         }
-
-        // NOTE no role?
         Customer newCustomer = Customer.builder()
             .username(username)
             .encryptedPassword(passwordEncoder.encode(password))
             .build();
 
-
-        HashMap<String, Integer> purchases = new HashMap<>();
-        purchases.put("apples", 0);
-        purchases.put("bananas", 0);
-        purchases.put("oranges", 0);
-        newCustomer.setPurchases(purchases);
         repository.save(newCustomer);
-        // return newCustomer;
+        return newCustomer;
     }
 
     
@@ -65,32 +53,38 @@ public class CustomerService implements UserDetailsService {
             .encryptedPassword(encryptedPassword)
             .build();
 
-        HashMap<String, Integer> purchases = new HashMap<>();
-        purchases.put("apples", 0);
-        purchases.put("bananas", 0);
-        purchases.put("oranges", 0);
-        newCustomer.setPurchases(purchases);
         repository.save(newCustomer);
         return newCustomer;
     }
 
-    @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        if (username == null) return null;
-        
-        Customer customer = null;
-        try {
-            customer =  repository.findById(username).get();
-        } catch(NoSuchElementException e) {
-            throw new UsernameNotFoundException("User not found with username: " + username);
+    public Customer updatePurchases(String username, HashMap<String, Integer> newPurchases) throws UsernameNotFoundException {
+        Optional<Customer> optionalCustomer = repository.findById(username);
+        if (optionalCustomer.isPresent()) {
+            Customer customer = optionalCustomer.get();
+            customer.setPurchases(newPurchases);
+            return repository.save(customer);
+        } else {
+            throw new UsernameNotFoundException("attempted to update purchases on non existant user: " + username);
         }
-        
-        log.info("grabbed this customer from the DB: " + customer.toString());
-        return customer;
     }
 
+    public boolean customerExists(String username) {
+        return repository.existsById(username);
+    }
 
+    public Customer loadCustomerByUsername(String username) throws UsernameNotFoundException {
+        if (username == null) return null;
+        Optional<Customer> optionalCustomer =  repository.findById(username);
+        if (optionalCustomer.isPresent()) {
+            return optionalCustomer.get();
+        } else {
+            throw new UsernameNotFoundException("User not found with username: " + username);
+        }
+    }
 
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        return (UserDetails) this.loadCustomerByUsername(username);
+    }
 
-    // other methods are just used directly by controller (<- TODO move here)
 }

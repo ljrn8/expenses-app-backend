@@ -6,6 +6,7 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 import com.example.beginnerexpensesappapi.Customer;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.server.RepresentationModelAssembler;
+import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.stereotype.Component;
 
 import com.example.beginnerexpensesappapi.controller.CustomerController;
@@ -20,11 +21,10 @@ class CustomerModelAssembler implements RepresentationModelAssembler<Customer, E
 
     @Override
     public EntityModel<Customer> toModel(Customer customer) {
-        // TODO
-        return null;
-    }
-        // return EntityModel.of(customer, // 
-        //         linkTo(methodOn(CustomerController.class).get(customer.getUsername())).withSelfRel(),
-        //         linkTo(methodOn(CustomerController.class).all()).withRel("customers"));
-        // }
+        return EntityModel.of(customer,
+                linkTo(methodOn(CustomerController.class).get()).withSelfRel()
+                // TODO
+                // linkTo(methodOn(CustomerController.class).all()).withSelfRel(),
+        );
+     }
 }

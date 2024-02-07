@@ -17,15 +17,12 @@ public class BeginnerExpensesAppApiApplication {
 		SpringApplication.run(BeginnerExpensesAppApiApplication.class, args);
 	}
 
-
 	@Autowired
 	private CustomerService customerService;
 
 	@Bean
 	CommandLineRunner initDatabase(CustomerRepository repository) {
-		return args -> {
-			customerService.registerNewCustomerFromPlainText("rose", "esor");
-		};
+		return args -> customerService.registerNewCustomerFromPlainText("rose", "esor");
 	}
 
 }

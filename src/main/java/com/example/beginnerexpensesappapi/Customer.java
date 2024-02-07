@@ -2,6 +2,7 @@ package com.example.beginnerexpensesappapi;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.data.annotation.Id;
@@ -25,10 +26,14 @@ public class Customer implements UserDetails {
     @Id
     private String username;
 
+    // TODO redundant
     private String encryptedPassword;
 
-    private HashMap<String, Integer> purchases; // TODO need to add entries apon creation everytime
-
+    private HashMap<String, Integer> purchases = new HashMap<>(Map.of(
+            "apples", 0,
+            "bananas", 0,
+            "oranges", 0
+    ));
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -39,12 +44,6 @@ public class Customer implements UserDetails {
     public String getPassword() {
         return this.encryptedPassword;
     }
-
-
-
-
-
-    // TODO all set to true - sec risk? //
 
     @Override
     public boolean isAccountNonExpired() {
