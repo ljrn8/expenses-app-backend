@@ -1,5 +1,6 @@
-package com.example.beginnerexpensesappapi;
+package com.example.beginnerexpensesappapi.repository;
 
+import com.example.beginnerexpensesappapi.domain.Customer;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 

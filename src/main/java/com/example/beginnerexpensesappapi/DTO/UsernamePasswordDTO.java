@@ -1,4 +1,4 @@
-package com.example.beginnerexpensesappapi;
+package com.example.beginnerexpensesappapi.DTO;
 
 import lombok.Data;
 

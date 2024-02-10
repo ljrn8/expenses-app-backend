@@ -1,4 +1,4 @@
-package com.example.beginnerexpensesappapi;
+package com.example.beginnerexpensesappapi.security;
 
 import com.example.beginnerexpensesappapi.service.CustomerService;
 import com.example.beginnerexpensesappapi.service.JwtService;
@@ -22,18 +22,14 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.security.SignatureException;
 
-/**
- * Takes in JWTs from the user and sets the security context holder with an authorization obj from it
- */
 @Log
 @Component
 @RequiredArgsConstructor // subsitutes autow
 @Slf4j // see in logs
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private final JwtService jwtService; // efectively autwired my req args constructor (good practice?)
+    private final JwtService jwtService; // autowires in args constructor (good practice?)
 
-    /// USER MADE REQEUEST TO SERVER WITH A JWT ->> ONLY SUBSEQUENT CALLS (not authentication)
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
@@ -48,9 +44,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 UsernamePasswordAuthenticationToken authentication = jwtService.getAuthentication(jwt);
                 String username = (String) authentication.getPrincipal();
                 if (!jwtService.verifyToken(jwt, username)) throw new JwtException("invalid token");
-
-                // allows the @PreAuthorize
-                SecurityContextHolder.getContext().setAuthentication(authentication); 
+                SecurityContextHolder.getContext().setAuthentication(authentication);
             }
 
             filterChain.doFilter(request, response);
@@ -61,7 +55,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
     }
 
-    /// JWT SHIT
+    /// JWTs
     // HTTP request headers = JSON proprties EG "method: POST" ect
     //
     // "authentication: Bearer awtoih9wwayyryearye.aerawryyeauyeaurayaeye.arweyaeyeatueauearyawyarwy " << b64 encoded JWT (not encrypted) with public key in its signature

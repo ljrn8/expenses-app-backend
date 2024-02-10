@@ -1,4 +1,4 @@
-package com.example.beginnerexpensesappapi;
+package com.example.beginnerexpensesappapi.domain;
 
 import java.util.Collection;
 import java.util.HashMap;

@@ -1,6 +1,6 @@
 package com.example.beginnerexpensesappapi.service;
 
-import com.example.beginnerexpensesappapi.PurchasesDTO;
+import com.example.beginnerexpensesappapi.DTO.PurchasesDTO;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;

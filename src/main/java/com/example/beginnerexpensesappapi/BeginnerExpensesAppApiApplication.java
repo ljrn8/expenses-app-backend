@@ -1,5 +1,6 @@
 package com.example.beginnerexpensesappapi;
 
+import com.example.beginnerexpensesappapi.repository.CustomerRepository;
 import com.example.beginnerexpensesappapi.service.CustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;

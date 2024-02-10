@@ -4,8 +4,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.example.beginnerexpensesappapi.PurchasesDTO;
-import com.example.beginnerexpensesappapi.UsernamePasswordDTO;
+import com.example.beginnerexpensesappapi.DTO.PurchasesDTO;
+import com.example.beginnerexpensesappapi.DTO.UsernamePasswordDTO;
 import com.example.beginnerexpensesappapi.service.DTOService;
 import io.jsonwebtoken.security.SignatureException;
 import lombok.extern.java.Log;
@@ -22,7 +22,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-import com.example.beginnerexpensesappapi.Customer;
+import com.example.beginnerexpensesappapi.domain.Customer;
 import com.example.beginnerexpensesappapi.service.CustomerService;
 import com.example.beginnerexpensesappapi.service.JwtService;
 
@@ -135,7 +135,6 @@ public class CustomerController {
 
     }
 
-    // for learning purposes only
     @GetMapping(path="/test")
     public ResponseEntity<EntityModel<Customer>> roseTest() throws UsernameNotFoundException {
         return ResponseEntity.ok(
