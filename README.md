@@ -1,5 +1,3 @@
 # expenses-app-backend
-sprint boot mvc + mongo rest api backend for a beginner expenses web application with basic account registration / verification
+sprint boot + spring security + mongo RESTful backend for a beginner expenses web application with basic JWT authorization/authentication and testing
 
-# TODO
-JWT
