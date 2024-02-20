@@ -41,9 +41,6 @@ public class CustomerController {
     private CustomerService customerService;
 
     @Autowired
-    private CustomerModelAssembler assembler;
-
-    @Autowired
     private DTOService dtoService;
 
     @Autowired
@@ -63,7 +60,9 @@ public class CustomerController {
             throw new AuthenticationCredentialsNotFoundException("username in authentication was null");
         }
         return ResponseEntity.ok(
-                customerModelAssembler.toModel(customerService.loadCustomerByUsername(username))
+                customerModelAssembler.toModel(
+                    customerService.loadCustomerByUsername(username)
+                )
         );
     }
 
